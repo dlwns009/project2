@@ -1,0 +1,14 @@
+<!-- templates/mypage.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>마이페이지</title>
+</head>
+<body>
+    <h1>마이페이지</h1>
+    <p>Username: {{ session['username'] }}</p>
+    <p><a href="{{ url_for('logout') }}">로그아웃</a></p>
+    <p><a href="{{ url_for('posts') }}">게시글 목록으로 돌아가기</a></p>
+</body>
+</html>

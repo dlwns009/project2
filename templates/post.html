@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ post['title'] }}</title>
+</head>
+<body>
+    <h1>{{ post['title'] }}</h1>
+    <p>{{ post['content'] }}</p>
+    <p>작성일: {{ post['created_at'] }}</p>
+    
+    <a href="{{ url_for('edit', id=post['id']) }}">수정</a>
+
+    <!-- 삭제 폼에 CSRF 토큰 추가 -->
+    <form action="{{ url_for('delete', id=post['id']) }}" method="post" style="display:inline;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit">삭제</button>
+    </form>
+    
+    <br><br>
+    <a href="{{ url_for('posts') }}">게시글 목록으로 돌아가기</a>
+</body>
+</html>

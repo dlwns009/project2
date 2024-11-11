@@ -1,9 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory
 import pymysql
 from werkzeug.security import generate_password_hash, check_password_hash
 import re
 from functools import wraps
 from flask_wtf.csrf import CSRFProtect
+import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = 'your_strong_secret_key'  # 강력한 난수로 secret_key 설정
@@ -29,6 +31,19 @@ def login_required(f):
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
+
+# 파일 업로드 설정
+UPLOAD_FOLDER = 'uploads'  # 파일이 저장될 폴더 경로
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'txt', 'docx'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# 프로그램 시작 시 업로드 폴더가 없으면 생성
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+# 업로드 파일의 확장자를 검증하는 함수
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # 기본 경로 설정
 @app.route('/')
@@ -145,10 +160,23 @@ def create():
     if request.method == 'POST':
         title = request.form['title']
         content = request.form['content']
-        
+        is_private = 'is_private' in request.form  # 비밀글 여부
+        user_id = session['id']  # 현재 로그인한 사용자의 ID
+
+        # 파일 업로드 처리
+        file = request.files.get('file')
+        filename = None
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+        # 데이터베이스에 게시글 저장
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute('INSERT INTO posts (title, content) VALUES (%s, %s)', (title, content))
+        cursor.execute(
+            'INSERT INTO posts (title, content, is_private, filename, user_id) VALUES (%s, %s, %s, %s, %s)', 
+            (title, content, is_private, filename, user_id)
+        )
         conn.commit()
         cursor.close()
         conn.close()
@@ -160,6 +188,7 @@ def create():
 
 # 게시글 상세 조회 (Read)
 @app.route('/post/<int:id>')
+@login_required
 def post(id):
     conn = get_db_connection()
     cursor = conn.cursor(pymysql.cursors.DictCursor)
@@ -172,7 +201,13 @@ def post(id):
         flash("Post not found!")
         return redirect(url_for('posts'))
     
+    # 비밀글 접근 제한
+    if post['is_private'] and post.get('user_id') and session['id'] != post['user_id']:
+        flash("This is a private post.")
+        return redirect(url_for('posts'))
+    
     return render_template('post.html', post=post)
+
 
 # 게시글 수정 (Update)
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
@@ -213,6 +248,11 @@ def delete(id):
     
     flash("Post deleted successfully!")
     return redirect(url_for('posts'))
+
+# 파일 다운로드 경로
+@app.route('/download/<filename>')
+def download_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 if __name__ == "__main__":
     app.run(port=5001, debug=True)

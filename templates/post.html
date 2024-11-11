@@ -7,6 +7,12 @@
 <body>
     <h1>{{ post['title'] }}</h1>
     <p>{{ post['content'] }}</p>
+
+    {% if post['filename'] %}
+    <p>첨부 파일: <a href="{{ url_for('download_file', filename=post['filename']) }}">{{ post['filename'] }}</a></p>
+    {% endif %}
+
+
     <p>작성일: {{ post['created_at'] }}</p>
     
     <a href="{{ url_for('edit', id=post['id']) }}">수정</a>

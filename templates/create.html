@@ -6,17 +6,25 @@
 </head>
 <body>
     <h1>새 게시글 작성</h1>
-    <form action="{{ url_for('create') }}" method="post">
+    <form action="{{ url_for('create') }}" method="post" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
+    
         <label for="title">제목:</label>
         <input type="text" name="title" id="title" required><br><br>
-        
+    
         <label for="content">내용:</label>
         <textarea name="content" id="content" required></textarea><br><br>
-        
+    
+        <label for="file">파일 업로드:</label>
+        <input type="file" name="file"><br><br>
+    
+        <label>
+            <input type="checkbox" name="is_private"> 비밀글로 설정
+        </label><br><br>
+    
         <button type="submit">게시글 저장</button>
     </form>
+    
     <a href="{{ url_for('posts') }}">게시글 목록으로 돌아가기</a>
 </body>
 </html>

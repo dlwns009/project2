@@ -21,11 +21,15 @@
     <!-- 게시글 목록 표시 -->
     <ul>
         {% if posts %}
+           <!-- posts.html 템플릿에서 게시글 목록 -->
             {% for post in posts %}
-                <li>
-                    <a href="{{ url_for('post', id=post.id) }}">{{ post.title }}</a>
-                </li>
+            <li>
+                <a href="{{ url_for('post', id=post['id']) }}">{{ post['title'] }}</a>
+                <!-- 수정 링크 -->
+                <a href="{{ url_for('edit', id=post['id']) }}">수정</a>
+            </li>
             {% endfor %}
+
         {% else %}
             <p>게시글이 없습니다.</p>
         {% endif %}
